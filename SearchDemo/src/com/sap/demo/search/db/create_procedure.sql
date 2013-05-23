@@ -1,0 +1,38 @@
+create procedure findProduct(in searchTerm VARCHAR(100), out result "PRODUCT_RESULT")
+	AS
+	BEGIN
+		   search = SELECT "PARENT_KEY", "TEXT",  SCORE() AS RELEVANCE
+					FROM "SNWD_TEXTS"
+					WHERE client='000' AND 
+						  CONTAINS (TEXT, :searchTerm,   FUZZY(0.4), WEIGHT(0.5))
+						  OR CONTAINS (TEXT, :searchTerm,   LINGUISTIC, WEIGHT(0.6));
+		   
+		   name = SELECT "PRODUCT".*, "TEXT"."TEXT" AS NAME,DESCRIPTION.text AS DESCRIPTION, RELEVANCE
+				  FROM "SNWD_PD" AS "PRODUCT" 
+					  INNER JOIN :search AS "TEXT"
+					  ON "TEXT"."PARENT_KEY" = "PRODUCT"."NAME_GUID" 
+					  LEFT OUTER JOIN "SNWD_TEXTS" AS DESCRIPTION
+					  ON "PRODUCT".DESC_GUID=DESCRIPTION.PARENT_KEY
+				  WHERE "PRODUCT".client='000';
+				  
+		   descr = SELECT "PRODUCT".*, "TEXT"."TEXT" AS NAME,DESCRIPTION.text AS DESCRIPTION, RELEVANCE
+				   FROM "SNWD_PD" AS "PRODUCT" 
+					   INNER JOIN :search AS DESCRIPTION 
+					   ON "DESCRIPTION"."PARENT_KEY" = "PRODUCT"."DESC_GUID" 
+					   LEFT OUTER JOIN "SNWD_TEXTS" as "TEXT"
+					   ON "PRODUCT".NAME_GUID="TEXT".PARENT_KEY
+				   WHERE "PRODUCT".client='000';
+
+		   search_all = SELECT *
+						FROM :name 
+						UNION SELECT *
+						FROM :descr;
+						
+		   max_relevance = SELECT MAX(TO_DOUBLE(RELEVANCE)) AS RELEVANCE, PRODUCT_ID
+							    FROM :search_all group by PRODUCT_ID;	
+							    
+		   result = SELECT PRODUCT.*
+					FROM :search_all PRODUCT 
+				    INNER JOIN :max_relevance MAX_RELEVANCE 
+				    ON PRODUCT.RELEVANCE=MAX_RELEVANCE.RELEVANCE and PRODUCT.PRODUCT_ID=MAX_RELEVANCE.PRODUCT_ID ORDER BY PRODUCT.RELEVANCE DESC;                     
+	END;
