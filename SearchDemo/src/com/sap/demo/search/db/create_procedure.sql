@@ -32,7 +32,7 @@ create procedure findProduct(in searchTerm VARCHAR(100), out result "PRODUCT_RES
 							    FROM :search_all group by PRODUCT_ID;	
 							    
 		   result = SELECT PRODUCT.*
-					FROM :search_all PRODUCT 
-				    INNER JOIN :max_relevance MAX_RELEVANCE 
+					FROM :max_relevance MAX_RELEVANCE
+				    INNER JOIN :search_all PRODUCT  
 				    ON PRODUCT.RELEVANCE=MAX_RELEVANCE.RELEVANCE and PRODUCT.PRODUCT_ID=MAX_RELEVANCE.PRODUCT_ID ORDER BY PRODUCT.RELEVANCE DESC;                     
 	END;
