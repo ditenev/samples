@@ -4,8 +4,8 @@ create procedure findProduct(in searchTerm VARCHAR(100), out result "PRODUCT_RES
 		   search = SELECT "PARENT_KEY", "TEXT",  SCORE() AS RELEVANCE
 					FROM "SNWD_TEXTS"
 					WHERE client='000' AND 
-						  CONTAINS (TEXT, :searchTerm,   FUZZY(0.4), WEIGHT(0.5))
-						  OR CONTAINS (TEXT, :searchTerm,   LINGUISTIC, WEIGHT(0.6));
+						  (CONTAINS (TEXT, :searchTerm,   FUZZY(0.4), WEIGHT(0.5)) OR 
+						  CONTAINS (TEXT, :searchTerm,   LINGUISTIC, WEIGHT(0.6)));
 		   
 		   name = SELECT "PRODUCT".*, "TEXT"."TEXT" AS NAME,DESCRIPTION.text AS DESCRIPTION, RELEVANCE
 				  FROM "SNWD_PD" AS "PRODUCT" 
